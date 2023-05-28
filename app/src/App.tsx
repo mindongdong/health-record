@@ -1,24 +1,25 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createStackNavigator } from "@react-navigation/stack";
 
-import React from 'react';
+import MainScreen from "./screens/MainScreen";
+import PlanScreen from "./screens/PlanScreen";
+import DataScreen from "./screens/DataScreen";
+import ProfileScreen from "./screens/ProfileScreen";
+import MenuBar from "./components/MenuBar";
 
-import {View} from 'react-native';
+const Stack = createStackNavigator();
 
-import SignupScreen from './screens/SignupScreen';
-import LoginScreen from './screens/LoginScreen';
-import MainScreen from './screens/MainScreen';
-
-const App: React.FC = () => (
-  <View>
-    <SignupScreen />
-    <LoginScreen />
-    <MainScreen />
-  </View>
-);
-
-export default App;
+export default function App() {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Home" component={MainScreen} />
+        <Stack.Screen name="Plan" component={PlanScreen} />
+        <Stack.Screen name="Data" component={DataScreen} />
+        <Stack.Screen name="Profile" component={ProfileScreen} />
+      </Stack.Navigator>
+      <MenuBar />
+    </NavigationContainer>
+  );
+}
