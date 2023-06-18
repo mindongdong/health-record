@@ -1,11 +1,11 @@
 import React, {
   useRef,
-  useEffect,
   useState,
   Suspense,
   useLayoutEffect,
   useImperativeHandle,
   forwardRef,
+  useEffect,
 } from "react";
 import {
   TouchableWithoutFeedback,
@@ -24,9 +24,18 @@ import { TextureLoader } from "expo-three";
 import { useAnimatedSensor, SensorType } from "react-native-reanimated";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader";
-import { Mesh } from "three";
+import {
+  Mesh,
+  MeshBasicMaterial,
+  MeshPhongMaterial,
+  MeshMatcapMaterial,
+  BoxBufferGeometry,
+  Raycaster,
+  Vector2,
+  BoxGeometry,
+} from "three";
 
-interface ShoeProps {
+interface BodyProps {
   animatedSensor: {
     sensor: {
       value: {
@@ -38,69 +47,73 @@ interface ShoeProps {
   };
 }
 
-const Shoe: React.FC<ShoeProps> = forwardRef((props: ShoeProps, ref: any) => {
-  const [base, normal, rough] = useLoader(TextureLoader, [
-    require("../assets/Airmax/textures/BaseColor.jpg"),
-    require("../assets/Airmax/textures/Normal.jpg"),
-    require("../assets/Airmax/textures/Roughness.png"),
-  ]);
-
-  const material = useLoader(MTLLoader, require("../assets/Airmax/shoe.mtl"));
-
-  const obj = useLoader(
-    OBJLoader,
-    require("../assets/Airmax/shoe.obj"),
-    (loader) => {
-      material.preload();
-      loader.setMaterials(material);
-    }
-  );
+const Body: React.FC<BodyProps> = forwardRef((props: BodyProps, ref: any) => {
+  const obj = useLoader(OBJLoader, require("../assets/human/human.obj"));
+  // const obj = useLoader(OBJLoader, require("../assets/Airmax/shoe.obj"));
 
   const mesh = useRef<Mesh>(null);
 
   useLayoutEffect(() => {
     obj.traverse((child) => {
       if (child instanceof Mesh) {
-        child.material.map = base;
-        child.material.normalMap = normal;
-        child.material.roughnessMap = rough;
+        child.material = new MeshMatcapMaterial({ color: 0xd2d2d2 }); // Set material color to black
       }
     });
   }, [obj]);
 
-  //   useFrame((state, delta) => {
-  //     let { x, y, z } = props.animatedSensor.sensor.value;
-  //     x = ~~(x * 100) / 5000;
-  //     y = ~~(y * 100) / 5000;
-  //     mesh.current.rotation.x += x;
-  //     mesh.current.rotation.y += y;
-  //     console.log(
-  //       `Rotation x: ${mesh.current.rotation.x}` +
-  //         `Rotation y: ${mesh.current.rotation.y}`
-  //     );
-  //   });
-
   useImperativeHandle(ref, () => ({
     rotateLeft: () => {
       console.log("Attempting to rotate left");
-      mesh.current.rotation.y -= 0.1; // Modify the value to adjust rotation speed
-      //   mesh.current.rotation.x -= 0.1;
+      mesh.current.rotation.y -= 0.1;
       console.log(`Rotation y: ${mesh.current.rotation.y}`);
     },
     rotateRight: () => {
       console.log("Attempting to rotate right");
-      mesh.current.rotation.y += 0.1; // Modify the value to adjust rotation speed
-      //   mesh.current.rotation.x += 0.1;
+      mesh.current.rotation.y += 0.1;
       console.log(`Rotation y: ${mesh.current.rotation.y}`);
     },
   }));
 
   return (
-    <mesh ref={mesh} rotation={[0.7, 0, 0]}>
-      <primitive object={obj} scale={10} />
+    <mesh ref={mesh} rotation={[0.3, 0, 0]} position={[0, -2.4, 0]}>
+      <primitive object={obj} scale={0.028} />
     </mesh>
   );
 });
+
+const Interactable = ({ touch, setCubes }) => {
+  const { scene, camera, size } = useThree();
+
+  useEffect(() => {
+    if (touch) {
+      const raycaster = new Raycaster();
+      const mouse = new Vector2();
+
+      mouse.x = (touch.x / size.width) * 2 - 1;
+      mouse.y = -(touch.y / size.height) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+
+      const intersects = raycaster.intersectObjects(scene.children, true);
+
+      if (intersects.length > 0) {
+        let position = intersects[0].point;
+        let normal = intersects[0].face.normal.clone();
+        normal.multiplyScalar(0.05);
+        position.add(normal);
+
+        setCubes((cubes) => {
+          console.log("Creating a cube at:", position);
+          return [...cubes, { position: [position.x, position.y, position.z] }];
+        });
+      } else {
+        console.log("No intersection detected.");
+      }
+    }
+  }, [touch]);
+
+  return null;
+};
 
 const styles = StyleSheet.create({
   button: {
@@ -145,7 +158,7 @@ export default function HumanModel() {
     interval: 100,
   });
 
-  const shoeRef = useRef<ShoeHandle>(null);
+  const shoeRef = useRef<BodyHandle>(null);
 
   //   const rotateLeft = () => {
   //     shoeRef.current.rotateLeft();
@@ -183,8 +196,24 @@ export default function HumanModel() {
     }
   };
 
+  const [touch, setTouch] = useState(null);
+  const [cubes, setCubes] = useState<{ position: [number, number, number] }[]>(
+    []
+  );
+  const [canvasLayout, setCanvasLayout] = useState(null);
+
+  const handleTouch = (evt) => {
+    const { locationX, locationY } = evt.nativeEvent;
+    console.log(`Touched at x: ${locationX}, y: ${locationY}`);
+    setTouch({ x: locationX, y: locationY });
+  };
+
+  const handleCanvasLayout = (e) => {
+    setCanvasLayout(e.nativeEvent.layout);
+  };
+
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1 }} onTouchStart={handleTouch}>
       <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
         <TouchableWithoutFeedback>
           <View style={styles.buttonTop}>
@@ -203,13 +232,23 @@ export default function HumanModel() {
           </View>
         </TouchableWithoutFeedback>
       </View>
-      <Canvas>
+      {/* other components */}
+      <Canvas onLayout={handleCanvasLayout}>
         <ambientLight />
         <pointLight position={[10, 10, 10]} />
         <Suspense fallback={null}>
-          <Shoe ref={shoeRef} animatedSensor={animatedSensor} />
+          <Body ref={shoeRef} animatedSensor={animatedSensor} />
+          <Interactable touch={touch} setCubes={setCubes} />
+          {/* add the cubes */}
+          {cubes.map((cube, index) => (
+            <mesh key={index} position={cube.position}>
+              <boxBufferGeometry args={[0.1, 0.1, 0.1]} />
+              <meshStandardMaterial color="red" />
+            </mesh>
+          ))}
         </Suspense>
       </Canvas>
+      {/* other components */}
       <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
         <TouchableWithoutFeedback
           onPressIn={startRotatingLeft}
