@@ -238,6 +238,8 @@ export default function HumanModel() {
     const touchLocationX = event.nativeEvent.locationX;
     const touchLocationY = event.nativeEvent.locationY;
 
+    console.log(currentRotation);
+    
     if (touchLocationY < 129) {
       if (currentRotation > 1.6 && currentRotation < 4.6) {
         setSelectedPart("목");
@@ -326,14 +328,6 @@ export default function HumanModel() {
             />
           </View>
         </TouchableWithoutFeedback>
-        <TouchableWithoutFeedback>
-          <View style={styles.buttonTop}>
-            <Image
-              source={require("../assets/edit.png")}
-              style={styles.imageTop}
-            />
-          </View>
-        </TouchableWithoutFeedback>
       </View>
       <View style={{ flex: 1 }} onTouchStart={handleTouch}>
         <View style={{ flex: 1 }} onLayout={handleCanvasContainerLayout}>
@@ -378,10 +372,9 @@ export default function HumanModel() {
               <Dropdown options={["보통", "아픔", "일상생활이 힘듦"]} />
 
               <Button
-                title="Cancel"
+                title="Done"
                 onPress={() => {
                   setModalVisible(false);
-                  removeLastCube();
                 }}
               />
             </ScrollView>
