@@ -13,6 +13,9 @@ import {
   Text,
   StyleSheet,
   Image,
+  Modal,
+  Button,
+  ScrollView,
 } from "react-native";
 import {
   Canvas,
@@ -34,6 +37,7 @@ import {
   Vector2,
   BoxGeometry,
 } from "three";
+import Dropdown from "./DropDown";
 
 interface BodyProps {
   animatedSensor: {
@@ -66,11 +70,13 @@ const Body: React.FC<BodyProps> = forwardRef((props: BodyProps, ref: any) => {
       console.log("Attempting to rotate left");
       mesh.current.rotation.y -= 0.1;
       console.log(`Rotation y: ${mesh.current.rotation.y}`);
+      return mesh.current.rotation.y;
     },
     rotateRight: () => {
       console.log("Attempting to rotate right");
       mesh.current.rotation.y += 0.1;
       console.log(`Rotation y: ${mesh.current.rotation.y}`);
+      return mesh.current.rotation.y;
     },
   }));
 
@@ -91,6 +97,8 @@ const Interactable = ({ touch, setCubes }) => {
 
       mouse.x = (touch.x / size.width) * 2 - 1;
       mouse.y = -(touch.y / size.height) * 2 + 1;
+
+      console.log(mouse.x, mouse.y);
 
       raycaster.setFromCamera(mouse, camera);
 
@@ -123,6 +131,14 @@ const styles = StyleSheet.create({
     width: 75,
     margin: 8, // Add space around each button
   },
+  activeButton: {
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+    width: 75,
+    margin: 8, // Add space around each button
+    backgroundColor: "skyblue", // or any color you want
+  },
   buttonTop: {
     flexDirection: "column",
     justifyContent: "center",
@@ -154,6 +170,23 @@ const styles = StyleSheet.create({
 });
 
 export default function HumanModel() {
+  const [touch, setTouch] = useState(null);
+  const [cubes, setCubes] = useState<{ position: [number, number, number] }[]>(
+    []
+  );
+  const [canvasLayout, setCanvasLayout] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedPart, setSelectedPart] = useState(null);
+  const [modalPosition, setModalPosition] = useState<{ x: number; y: number }>({
+    x: 0,
+    y: 0,
+  });
+  const [canvasPosition, setCanvasPosition] = useState({ x: 0, y: 0 });
+  const [allowHandleTouch, setAllowHandleTouch] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
+  const [currentRotation, setCurrentRotation] = useState(0);
+  const options = ["Option 1", "Option 2"]; // Add more options as needed
+
   const animatedSensor = useAnimatedSensor(SensorType.GYROSCOPE, {
     interval: 100,
   });
@@ -174,7 +207,8 @@ export default function HumanModel() {
   const startRotatingLeft = () => {
     if (rotateInterval === null) {
       const intervalId = setInterval(() => {
-        shoeRef.current?.rotateLeft();
+        const rotate = shoeRef.current?.rotateLeft();
+        setCurrentRotation(rotate);
       }, 50); // This will rotate left every 50ms
       setRotateInterval(intervalId);
     }
@@ -183,7 +217,8 @@ export default function HumanModel() {
   const startRotatingRight = () => {
     if (rotateInterval === null) {
       const intervalId = setInterval(() => {
-        shoeRef.current?.rotateRight();
+        const rotate = shoeRef.current?.rotateRight();
+        setCurrentRotation(rotate);
       }, 50); // This will rotate right every 50ms
       setRotateInterval(intervalId);
     }
@@ -196,24 +231,92 @@ export default function HumanModel() {
     }
   };
 
-  const [touch, setTouch] = useState(null);
-  const [cubes, setCubes] = useState<{ position: [number, number, number] }[]>(
-    []
-  );
-  const [canvasLayout, setCanvasLayout] = useState(null);
+  const handleTouch = (event) => {
+    // Prevent handleTouch from executing when the modal is visible
+    if (modalVisible) return;
+    if (!allowHandleTouch) return;
+    const touchLocationX = event.nativeEvent.locationX;
+    const touchLocationY = event.nativeEvent.locationY;
 
-  const handleTouch = (evt) => {
-    const { locationX, locationY } = evt.nativeEvent;
-    console.log(`Touched at x: ${locationX}, y: ${locationY}`);
-    setTouch({ x: locationX, y: locationY });
+    if (touchLocationY < 129) {
+      if (currentRotation > 1.6 && currentRotation < 4.6) {
+        setSelectedPart("목");
+      } else {
+        setSelectedPart("머리");
+      }
+    } else if (touchLocationY > 129 && touchLocationY < 190) {
+      if (currentRotation > 1.6 && currentRotation < 4.6) {
+        setSelectedPart("등");
+      } else {
+        setSelectedPart("가슴");
+      }
+    } else if (touchLocationY > 190 && touchLocationY < 232) {
+      if (currentRotation > 1.6 && currentRotation < 4.6) {
+        setSelectedPart("허리");
+      } else {
+        setSelectedPart("배");
+      }
+    } else if (touchLocationY > 232) {
+      setSelectedPart("하체");
+    }
+
+    setTouch({ x: touchLocationX, y: touchLocationY });
+
+    setModalPosition({
+      x: touchLocationX,
+      y: touchLocationY,
+    });
+    console.log(
+      `Modal will be displayed at x: ${touchLocationX}, y: ${touchLocationY}`
+    );
+    setModalVisible(true); // Open the modal when the screen is touched
   };
 
   const handleCanvasLayout = (e) => {
     setCanvasLayout(e.nativeEvent.layout);
   };
 
+  const handleCanvasContainerLayout = (e) => {
+    const { x, y } = e.nativeEvent.layout;
+    setCanvasPosition({ x, y });
+  };
+
+  const removeLastCube = () => {
+    setCubes((prevCubes) => {
+      if (prevCubes.length > 0) {
+        // Removes the last cube from the array
+        return prevCubes.slice(0, prevCubes.length - 1);
+      } else {
+        return prevCubes;
+      }
+    });
+  };
+
+  const modalStyles = StyleSheet.create({
+    modalView: {
+      position: "absolute",
+      left: modalPosition.x,
+      top: modalPosition.y,
+      margin: 20,
+      backgroundColor: "white",
+      borderRadius: 20,
+      padding: 5,
+      alignItems: "center",
+      shadowColor: "#000",
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      elevation: 5,
+      width: "33%", // 33% of screen width
+      height: "33%", // 25% of screen height
+    },
+  });
+
   return (
-    <View style={{ flex: 1 }} onTouchStart={handleTouch}>
+    <View style={{ flex: 1 }}>
       <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
         <TouchableWithoutFeedback>
           <View style={styles.buttonTop}>
@@ -232,27 +335,64 @@ export default function HumanModel() {
           </View>
         </TouchableWithoutFeedback>
       </View>
-      {/* other components */}
-      <Canvas onLayout={handleCanvasLayout}>
-        <ambientLight />
-        <pointLight position={[10, 10, 10]} />
-        <Suspense fallback={null}>
-          <Body ref={shoeRef} animatedSensor={animatedSensor} />
-          <Interactable touch={touch} setCubes={setCubes} />
-          {/* add the cubes */}
-          {cubes.map((cube, index) => (
-            <mesh key={index} position={cube.position}>
-              <boxBufferGeometry args={[0.1, 0.1, 0.1]} />
-              <meshStandardMaterial color="red" />
-            </mesh>
-          ))}
-        </Suspense>
-      </Canvas>
-      {/* other components */}
+      <View style={{ flex: 1 }} onTouchStart={handleTouch}>
+        <View style={{ flex: 1 }} onLayout={handleCanvasContainerLayout}>
+          <Canvas onLayout={handleCanvasLayout}>
+            <ambientLight />
+            <pointLight position={[10, 10, 10]} />
+            <Suspense fallback={null}>
+              <Body ref={shoeRef} animatedSensor={animatedSensor} />
+              <Interactable touch={touch} setCubes={setCubes} />
+              {/* add the cubes */}
+              {cubes.map((cube, index) => (
+                <mesh key={index} position={cube.position}>
+                  <boxBufferGeometry args={[0.1, 0.1, 0.1]} />
+                  <meshStandardMaterial color="red" />
+                </mesh>
+              ))}
+            </Suspense>
+          </Canvas>
+        </View>
+        {/* other components */}
+        {modalVisible && (
+          <View
+            style={[
+              modalStyles.modalView,
+              { left: modalPosition.x, top: modalPosition.y },
+            ]}
+          >
+            <ScrollView>
+              <Text
+                style={{
+                  fontSize: 15,
+                  textAlign: "center",
+                  marginBottom: 10,
+                  marginTop: 10,
+                  fontWeight: "bold",
+                }}
+              >
+                {selectedPart}
+              </Text>
+
+              <Dropdown options={["타박상", "상처", "골절"]} />
+              <Dropdown options={["보통", "아픔", "일상생활이 힘듦"]} />
+
+              <Button
+                title="Cancel"
+                onPress={() => {
+                  setModalVisible(false);
+                  removeLastCube();
+                }}
+              />
+            </ScrollView>
+          </View>
+        )}
+      </View>
       <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
         <TouchableWithoutFeedback
           onPressIn={startRotatingLeft}
           onPressOut={stopRotating}
+          onTouchStart={() => {}} // Prevent handleTouch from executing when the modal is visible
         >
           <View style={styles.buttonRotate}>
             <Image
@@ -274,8 +414,10 @@ export default function HumanModel() {
             <Text style={styles.text}>Rotate Right</Text>
           </View>
         </TouchableWithoutFeedback>
-        <TouchableWithoutFeedback>
-          <View style={styles.button}>
+        <TouchableWithoutFeedback
+          onPress={() => setAllowHandleTouch(!allowHandleTouch)}
+        >
+          <View style={allowHandleTouch ? styles.activeButton : styles.button}>
             <Image
               source={require("../assets/click.png")}
               style={styles.image}
