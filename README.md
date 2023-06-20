@@ -1,6 +1,6 @@
-# meditouch
+# MediTouch
 
-Welcome to the GitHub repository of meditouch! meditouch is an innovative mobile application designed to empower users with an intuitive way of tracking their health symptoms. Leveraging the power of a 3D human model view, meditouch provides a unique approach to health tracking that aims to be both user-friendly and comprehensive.
+meditouch is an innovative mobile application designed to empower users with an intuitive way of tracking their health symptoms. Leveraging the power of a 3D human model view, meditouch provides a unique approach to health tracking that aims to be both user-friendly and comprehensive.
 
 ## Overview 
 
