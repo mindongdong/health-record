@@ -20,6 +20,6 @@ We further enhance the user experience by incorporating **three.js** and **react
 <img src="https://github.com/mindongdong/health-record/blob/main/app/src/assets/fastapi.png?raw=true" height="300px" width="500px">
 <img src="https://github.com/mindongdong/health-record/blob/main/app/src/assets/postgresql.svg.png?raw=true" height="300px" width="300px">
 
-The backend of meditouch uses **FastAPI** - a modern, fast (high-performance), web framework for building APIs with Python 3.6+ based on standard Python type hints. This choice was driven by its speed and simplicity, making our app efficient and easy to maintain.
+The backend of meditouch uses **FastAPI** - a modern, fast (high-performance), web framework for building APIs with Python 3.9+ based on standard Python type hints. This choice was driven by its speed and simplicity, making our app efficient and easy to maintain.
 
 Our database of choice is **PostgreSQL**, a powerful, open-source, object-relational database system that uses and extends the SQL language combined with many features that safely store and scale complicated data workloads. The data recorded by users in the meditouch app is securely stored in this DB.
