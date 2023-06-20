@@ -1,3 +1,4 @@
+import axios from "axios";
 import React, {
   useRef,
   useState,
@@ -176,16 +177,18 @@ export default function HumanModel() {
   );
   const [canvasLayout, setCanvasLayout] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedPart, setSelectedPart] = useState(null);
+  const [recordModalVisible, setRecordModalVisible] = useState(false);
+  const [selectedPart, setSelectedPart] = useState("");
+  const [selectedOption1, setSelectedOption1] = useState("");
+  const [selectedOption2, setSelectedOption2] = useState("");
   const [modalPosition, setModalPosition] = useState<{ x: number; y: number }>({
     x: 0,
     y: 0,
   });
   const [canvasPosition, setCanvasPosition] = useState({ x: 0, y: 0 });
   const [allowHandleTouch, setAllowHandleTouch] = useState(false);
-  const [showOptions, setShowOptions] = useState(false);
   const [currentRotation, setCurrentRotation] = useState(0);
-  const options = ["Option 1", "Option 2"]; // Add more options as needed
+  const [data, setData] = useState([]);
 
   const animatedSensor = useAnimatedSensor(SensorType.GYROSCOPE, {
     interval: 100,
@@ -239,7 +242,7 @@ export default function HumanModel() {
     const touchLocationY = event.nativeEvent.locationY;
 
     console.log(currentRotation);
-    
+
     if (touchLocationY < 129) {
       if (currentRotation > 1.6 && currentRotation < 4.6) {
         setSelectedPart("목");
@@ -294,6 +297,37 @@ export default function HumanModel() {
     });
   };
 
+  const onSubmitHandler = () => {
+    const data = {
+      part: selectedPart,
+      symptom: selectedOption1,
+      degree: selectedOption2,
+    };
+
+    axios
+      .post("http://127.0.0.1:8000/routes/record/save", data)
+      .then((response) => console.log(response))
+      .catch((error) => console.error(error));
+
+    setModalVisible(false);
+  };
+
+  const onPressHandler = async () => {
+    try {
+      const response = await axios.get(
+        "http://127.0.0.1:8000/routes/record/get"
+      );
+      setData(response.data);
+      setRecordModalVisible(true);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const onDismissHandler = () => {
+    setRecordModalVisible(false);
+  };
+
   const modalStyles = StyleSheet.create({
     modalView: {
       position: "absolute",
@@ -320,7 +354,7 @@ export default function HumanModel() {
   return (
     <View style={{ flex: 1 }}>
       <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
-        <TouchableWithoutFeedback>
+        <TouchableWithoutFeedback onPress={onPressHandler}>
           <View style={styles.buttonTop}>
             <Image
               source={require("../assets/record.png")}
@@ -329,6 +363,33 @@ export default function HumanModel() {
           </View>
         </TouchableWithoutFeedback>
       </View>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={onDismissHandler}
+      >
+        <View>
+          <View>
+            <ScrollView>
+              {data.map((item, index) => (
+                <View key={index}>
+                  <Text>ID: {item.id}</Text>
+                  <Text>Part: {item.part}</Text>
+                  <Text>Symbol: {item.symbol}</Text>
+                  <Text>Degree: {item.degree}</Text>
+                </View>
+              ))}
+            </ScrollView>
+
+            <TouchableWithoutFeedback onPress={onDismissHandler}>
+              <View>
+                <Text>Hide Modal</Text>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </View>
+      </Modal>
       <View style={{ flex: 1 }} onTouchStart={handleTouch}>
         <View style={{ flex: 1 }} onLayout={handleCanvasContainerLayout}>
           <Canvas onLayout={handleCanvasLayout}>
@@ -368,15 +429,16 @@ export default function HumanModel() {
                 {selectedPart}
               </Text>
 
-              <Dropdown options={["타박상", "상처", "골절"]} />
-              <Dropdown options={["보통", "아픔", "일상생활이 힘듦"]} />
-
-              <Button
-                title="Done"
-                onPress={() => {
-                  setModalVisible(false);
-                }}
+              <Dropdown
+                options={["타박상", "상처", "골절"]}
+                setSelectedOption={setSelectedOption1}
               />
+              <Dropdown
+                options={["보통", "아픔", "일상생활이 힘듦"]}
+                setSelectedOption={setSelectedOption2}
+              />
+
+              <Button title="Done" onPress={onSubmitHandler} />
             </ScrollView>
           </View>
         )}

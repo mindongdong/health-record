@@ -1,9 +1,15 @@
 import React, { useState } from "react";
 import { View, Text, ScrollView, TouchableWithoutFeedback } from "react-native";
 
-const Dropdown = ({ options }) => {
-  const [selectedOption, setSelectedOption] = useState(options[0]);
+const Dropdown = ({ options, setSelectedOption }) => {
+  const [selectedOption, setSelectedOptionLocal] = useState(options[0]);
   const [isOpen, setIsOpen] = useState(false);
+
+  const onPressHandler = (option) => {
+    setSelectedOption(option);
+    setSelectedOptionLocal(option);
+    setIsOpen(false);
+  };
 
   return (
     <View style={{ marginBottom: 10 }}>
@@ -17,10 +23,7 @@ const Dropdown = ({ options }) => {
           {options.map((option, index) => (
             <TouchableWithoutFeedback
               key={index}
-              onPress={() => {
-                setSelectedOption(option);
-                setIsOpen(false);
-              }}
+              onPress={() => onPressHandler(option)}
             >
               <View style={{ padding: 8, borderWidth: 1, borderColor: "#000" }}>
                 <Text>{option}</Text>
