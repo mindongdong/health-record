@@ -9,7 +9,7 @@ Meditouch leverages the 3D human model view to facilitate easy and accurate symp
 ## Technology Stack
 
 ### Frontend
-<img src="https://github.com/mindongdong/health-record/blob/main/app/src/assets/react_native.png?raw=true" height="250px" width="500px">
+<img src="https://github.com/mindongdong/health-record/blob/main/app/src/assets/react_native.png?raw=true" height="300px" width="500px">
 <img src="https://github.com/mindongdong/health-record/blob/main/app/src/assets/three.png?raw=true" height="300px" width="300px">
 
 The frontend of meditouch is built using **React-Native**. This choice of technology ensures that our application is cross-platform, allowing us to reach a wider range of users regardless of the device they are using.
