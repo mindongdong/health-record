@@ -9,7 +9,7 @@ Meditouch leverages the 3D human model view to facilitate easy and accurate symp
 ## Technology Stack
 
 ### Frontend
-<img src="https://github.com/mindongdong/health-record/blob/main/app/src/assets/react_native.png?raw=true" height="300px" width="500px">
+<img src="https://github.com/mindongdong/health-record/blob/main/app/src/assets/react_native.png?raw=true" height="200px" width="500px">
 <img src="https://github.com/mindongdong/health-record/blob/main/app/src/assets/three.png?raw=true" height="300px" width="300px">
 
 The frontend of meditouch is built using **React-Native**. This choice of technology ensures that our application is cross-platform, allowing us to reach a wider range of users regardless of the device they are using.
@@ -17,7 +17,7 @@ The frontend of meditouch is built using **React-Native**. This choice of techno
 We further enhance the user experience by incorporating **three.js** and **react-three/fiber/native libraries**, which enable the implementation of the 3D model view. This integration allows users to visually log their symptoms onto a 3D human model, creating a more interactive and intuitive user experience.
 
 ### Backend
-<img src="https://github.com/mindongdong/health-record/blob/main/app/src/assets/fastapi.png?raw=true" height="300px" width="500px">
+<img src="https://github.com/mindongdong/health-record/blob/main/app/src/assets/fastapi.png?raw=true" height="200px" width="500px">
 <img src="https://github.com/mindongdong/health-record/blob/main/app/src/assets/postgresql.svg.png?raw=true" height="300px" width="300px">
 
 The backend of meditouch uses **FastAPI** - a modern, fast (high-performance), web framework for building APIs with Python 3.9+ based on standard Python type hints. This choice was driven by its speed and simplicity, making our app efficient and easy to maintain.
